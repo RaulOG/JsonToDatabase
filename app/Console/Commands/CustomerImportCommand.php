@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Customer;
+use ErrorException;
 use Illuminate\Console\Command;
 
 class CustomerImportCommand extends Command
@@ -18,7 +20,7 @@ class CustomerImportCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Reads a JSON file and writes the customer entries into DB';
 
     /**
      * Create a new command instance.
@@ -37,6 +39,22 @@ class CustomerImportCommand extends Command
      */
     public function handle()
     {
-        $this->error('File not found');
+        $fileName = $this->argument('file');
+        $filePath = base_path($fileName);
+
+        try{
+            $jsonString = file_get_contents($filePath);
+        }catch(ErrorException $e){
+            $this->error('File not found');
+            return ;
+        }
+
+        $jsonObject = json_decode($jsonString, true);
+        $customers = collect($jsonObject);
+
+        $customers->each(function(){
+            $customer = new Customer();
+            $customer->save();
+        });
     }
 }

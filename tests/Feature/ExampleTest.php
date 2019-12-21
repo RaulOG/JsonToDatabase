@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class ExampleTest extends TestCase
+class CustomerImportCommandTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -36,5 +36,19 @@ class ExampleTest extends TestCase
         $this->artisan('customer:import', ['file' => $file]);
 
         $this->assertDatabaseMissing('customers', []);
+    }
+
+    /**
+     * @test
+     */
+    public function it_writes_one_entry_when_file_contains_one_row()
+    {
+        $file = 'tests/Support/jsons/sample_with_one_entry.json';
+
+        $this->artisan('customer:import', ['file' => $file]);
+
+        $this->assertDatabaseHas('customers', [
+            'id' => 1
+        ]);
     }
 }
