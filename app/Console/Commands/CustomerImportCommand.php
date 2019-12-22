@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Customer;
+use Carbon\Carbon;
 use ErrorException;
 use Illuminate\Console\Command;
 
@@ -66,7 +67,7 @@ class CustomerImportCommand extends Command
             "checked" => (boolean)$raw["checked"],
             "description" => $raw["description"],
             "interest" => $raw["interest"],
-            "date_of_birth" => $raw["date_of_birth"],
+            "date_of_birth" => $this->getDateOfBirth($raw["date_of_birth"]),
             "email" => $raw["email"],
             "account" => $raw["account"],
             "credit_card_type" => $raw["credit_card"]["type"],
@@ -74,5 +75,17 @@ class CustomerImportCommand extends Command
             "credit_card_name" => $raw["credit_card"]["name"],
             "credit_card_expiration_date" => $raw["credit_card"]["expirationDate"],
         ];
+    }
+
+    /**
+     * @param string $dateOfBirth
+     * @return null|string
+     */
+    private function getDateOfBirth($dateOfBirth)
+    {
+        if(is_null($dateOfBirth)){
+            return null;
+        }
+        return Carbon::create($dateOfBirth)->format("Y-m-d");
     }
 }
