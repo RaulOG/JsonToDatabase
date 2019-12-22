@@ -33,10 +33,11 @@ class CustomerImportCommandTest extends TestCase
         $file = 'tests/Support/jsons/sample_without_data.json';
 
         // Act
-        $this->artisan('customer:import', ['file' => $file]);
+        $command = $this->artisan('customer:import', ['file' => $file]);
 
         // Assert
         $this->assertDatabaseMissing('customers', []);
+        $command->expectsOutput('File is empty');
     }
 
     /**

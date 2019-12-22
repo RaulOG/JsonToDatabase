@@ -6,6 +6,9 @@ use App\Customer;
 use Carbon\Carbon;
 use ErrorException;
 use Illuminate\Console\Command;
+use pcrov\JsonReader\InputStream\IOException;
+use pcrov\JsonReader\JsonReader;
+use pcrov\JsonReader\Parser\ParseException;
 
 class CustomerImportCommand extends Command
 {
@@ -43,20 +46,30 @@ class CustomerImportCommand extends Command
         $fileName = $this->argument('file');
         $filePath = base_path($fileName);
 
-        try{
-            $jsonString = file_get_contents($filePath);
-        }catch(ErrorException $e){
+        $reader = new JsonReader();
+
+        try {
+            $reader->open($filePath);
+            $reader->read(); // Enter in array of customers
+            $reader->read(); // Reader index at the customer 0
+        } catch (IOException $e) {
             $this->error('File not found');
-            return ;
+            return;
+        } catch (ParseException $e) {
+            $this->error('File is empty');
+            return;
         }
 
-        $jsonObject = json_decode($jsonString, true);
-        $rawCustomers = collect($jsonObject);
-
-        $rawCustomers->each(function($rawCustomer){
-            $customer = new Customer($this->transformRaw($rawCustomer));
+        $count = 0;
+        do {
+            $transformedData = $this->transformRaw($reader->value());
+            $customer = new Customer($transformedData);
             $customer->save();
-        });
+            $count++;
+        } while ($reader->next() && !is_null($reader->value()) && $count < 10);
+
+
+        $reader->close();
     }
 
     private function transformRaw(array $raw): array
@@ -83,11 +96,11 @@ class CustomerImportCommand extends Command
      */
     private function getDateOfBirth($dateOfBirth)
     {
-        if(is_null($dateOfBirth)){
+        if (is_null($dateOfBirth)) {
             return null;
         }
 
-        if($this->dateHasSlashes($dateOfBirth)) {
+        if ($this->dateHasSlashes($dateOfBirth)) {
             return $this->parseSlashedDate($dateOfBirth);
         }
 
@@ -96,7 +109,7 @@ class CustomerImportCommand extends Command
 
     private function dateHasSlashes($dateOfBirth): bool
     {
-        return (bool) strpos($dateOfBirth, '/');
+        return (bool)strpos($dateOfBirth, '/');
     }
 
     /**
