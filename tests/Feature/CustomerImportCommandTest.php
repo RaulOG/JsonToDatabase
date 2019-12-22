@@ -171,6 +171,33 @@ class CustomerImportCommandTest extends TestCase
         ]);
     }
 
+    /** @test */
+    public function it_saves_date_of_birth_as_expected_when_it_is_a_timestamp()
+    {
+        // Arrange
+        $file = 'tests/Support/jsons/sample_with_timestamped_date_of_birth.json';
+
+        // Act
+        $this->artisan('customer:import', ['file' => $file]);
+
+        // Assert
+        $this->assertDatabaseHas('customers', [
+            'id' => 1,
+            'name' => "Prof. Simeon Green",
+            'address' => "328 Bergstrom Heights Suite 709 49592 Lake Allenville",
+            'checked' => (int)false,
+            'description' => "Voluptatibus nihil dolor quaerat.",
+            'interest' => null,
+            'date_of_birth' => "1989-03-21",
+            'email' => "nerdman@cormier.net",
+            'account' => "556436171909",
+            'credit_card_type' => 'Visa',
+            'credit_card_number' => "4532383564703",
+            'credit_card_name' => "Brooks Hudson",
+            'credit_card_expiration_date' => "12/19",
+        ]);
+    }
+
     /**
      * @test
      */
