@@ -19,7 +19,7 @@ class CreateCustomersTable extends Migration
             $table->string('address');
             $table->boolean('checked');
             $table->string('description');
-            $table->string('interest');
+            $table->string('interest')->nullable();
             $table->timestamp('date_of_birth');
             $table->string('email');
             $table->string('account');
