@@ -121,7 +121,7 @@ class CustomerImportCommandTest extends TestCase
     public function it_stores_date_of_birth_from_a_slash_formatted_birth_of_date()
     {
         // Arrange
-        $file = 'tests/Support/jsons/sample_with_slash_formatted_date_of_birth.json';
+        $file = 'tests/Support/jsons/sample_with_slash_date_of_birth_as_d-m-y.json';
 
         // Act
         $this->artisan('customer:import', ['file' => $file]);
@@ -134,7 +134,7 @@ class CustomerImportCommandTest extends TestCase
             'checked' => (int)false,
             'description' => "Voluptatibus nihil dolor quaerat.",
             'interest' => null,
-            'date_of_birth' => "1969-11-10",
+            'date_of_birth' => "1969-10-15",
             'email' => "nerdman@cormier.net",
             'account' => "556436171909",
             'credit_card_type' => 'Visa',

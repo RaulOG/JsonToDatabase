@@ -86,6 +86,27 @@ class CustomerImportCommand extends Command
         if(is_null($dateOfBirth)){
             return null;
         }
+
+        if($this->dateHasSlashes($dateOfBirth)) {
+            return $this->parseSlashedDate($dateOfBirth);
+        }
+
         return Carbon::create($dateOfBirth)->format("Y-m-d");
+    }
+
+    private function dateHasSlashes($dateOfBirth): bool
+    {
+        return (bool) strpos($dateOfBirth, '/');
+    }
+
+    /**
+     * Assuming slashed dates have always the format d-m-Y
+     *
+     * @param $dateOfBirth
+     * @return string
+     */
+    private function parseSlashedDate($dateOfBirth)
+    {
+        return Carbon::createFromFormat('d/m/Y', $dateOfBirth)->format("Y-m-d");
     }
 }
