@@ -198,6 +198,33 @@ class CustomerImportCommandTest extends TestCase
         ]);
     }
 
+    /** @test */
+    public function it_stores_long_descriptions()
+    {
+        // Arrange
+        $file = 'tests/Support/jsons/sample_with_long_description_entry.json';
+
+        // Act
+        $this->artisan('customer:import', ['file' => $file]);
+
+        // Assert
+        $this->assertDatabaseHas('customers', [
+            'id' => 1,
+            'name' => "Prof. Simeon Green",
+            'address' => "328 Bergstrom Heights Suite 709 49592 Lake Allenville",
+            'checked' => (int)false,
+            'description' => "Beatae adipisci quae dolores possimus similique impedit laudantium. Error cum totam autem est earum rem sint eos. Consequuntur molestias ipsam repellat dolorem praesentium.<br>Architecto excepturi nam neque ullam ea. Ut enim incidunt perspiciatis blanditiis porro. Sed repellat eum et error. Est hic est quidem mollitia numquam nihil suscipit.<br>Quaerat iste et et ipsam et. Dolor ut commodi eligendi iure autem nesciunt. Molestiae similique nemo enim qui qui sequi omnis. Inventore voluptate tempora vitae eius id quam libero.",
+            'interest' => null,
+            'date_of_birth' => "1989-03-21",
+            'email' => "nerdman@cormier.net",
+            'account' => "556436171909",
+            'credit_card_type' => 'Visa',
+            'credit_card_number' => "4532383564703",
+            'credit_card_name' => "Brooks Hudson",
+            'credit_card_expiration_date' => "12/19",
+        ]);
+    }
+
     /**
      * @test
      */
