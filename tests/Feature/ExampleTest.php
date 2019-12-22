@@ -62,4 +62,30 @@ class CustomerImportCommandTest extends TestCase
         $this->assertDatabaseHas('customers', ['id' => 2]);
         $this->assertDatabaseHas('customers', ['id' => 3]);
     }
+
+    /**
+     * @test
+     */
+    public function it_writes_a_customer_entry_with_expected_data_structure()
+    {
+        $file = 'tests/Support/jsons/sample_with_one_entry.json';
+
+        $this->artisan('customer:import', ['file' => $file]);
+
+        $this->assertDatabaseHas('customers', [
+            'id' => 1,
+            'name' =>  "Prof. Simeon Green",
+            'address' =>  "328 Bergstrom Heights Suite 709 49592 Lake Allenville",
+            'checked' =>  (int)false,
+            'description' =>  "Voluptatibus nihil dolor quaerat.",
+            'interest' =>  "enable 24/7 channels",
+            'date_of_birth' =>  "1989-03-21T01:11:13+00:00",
+            'email' =>  "nerdman@cormier.net",
+            'account' =>  "556436171909",
+            'credit_card_type' => 'Visa',
+            'credit_card_number' =>"4532383564703",
+            'credit_card_name' => "Brooks Hudson",
+            'credit_card_expiration_date' => "12/19",
+        ]);
+    }
 }

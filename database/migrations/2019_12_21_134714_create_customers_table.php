@@ -15,6 +15,18 @@ class CreateCustomersTable extends Migration
     {
         Schema::create('customers', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->string('name');
+            $table->string('address');
+            $table->boolean('checked');
+            $table->string('description');
+            $table->string('interest');
+            $table->timestamp('date_of_birth');
+            $table->string('email');
+            $table->string('account');
+            $table->string('credit_card_type');
+            $table->string('credit_card_number');
+            $table->string('credit_card_name');
+            $table->string('credit_card_expiration_date');
             $table->timestamps();
         });
     }

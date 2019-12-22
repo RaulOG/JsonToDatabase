@@ -50,11 +50,29 @@ class CustomerImportCommand extends Command
         }
 
         $jsonObject = json_decode($jsonString, true);
-        $customers = collect($jsonObject);
+        $rawCustomers = collect($jsonObject);
 
-        $customers->each(function(){
-            $customer = new Customer();
+        $rawCustomers->each(function($rawCustomer){
+            $customer = new Customer($this->transformRaw($rawCustomer));
             $customer->save();
         });
+    }
+
+    private function transformRaw(array $raw): array
+    {
+        return [
+            "name" => $raw["name"],
+            "address" => $raw["address"],
+            "checked" => (boolean)$raw["checked"],
+            "description" => $raw["description"],
+            "interest" => $raw["interest"],
+            "date_of_birth" => $raw["date_of_birth"],
+            "email" => $raw["email"],
+            "account" => $raw["account"],
+            "credit_card_type" => $raw["credit_card"]["type"],
+            "credit_card_number" => $raw["credit_card"]["number"],
+            "credit_card_name" => $raw["credit_card"]["name"],
+            "credit_card_expiration_date" => $raw["credit_card"]["expirationDate"],
+        ];
     }
 }
