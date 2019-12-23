@@ -27,6 +27,17 @@ class CustomerImportCommand extends Command
     protected $description = 'Reads a JSON file and writes the customer entries into DB';
 
     /**
+     * @var JsonReader $reader
+     */
+    private $reader;
+
+    /**
+     * Defines the iteration step reading the json
+     * @var $count
+     */
+    private $count;
+
+    /**
      * Create a new command instance.
      *
      * @return void
@@ -46,12 +57,12 @@ class CustomerImportCommand extends Command
         $fileName = $this->argument('file');
         $filePath = base_path($fileName);
 
-        $reader = new JsonReader();
+        $this->reader = new JsonReader();
 
         try {
-            $reader->open($filePath);
-            $reader->read(); // Enter in array of customers
-            $reader->read(); // Reader index at the customer 0
+            $this->reader->open($filePath);
+            $this->reader->read(); // Enter in array of customers
+            $this->reader->read(); // Reader index at the customer 0
         } catch (IOException $e) {
             $this->error('File not found');
             return;
@@ -60,21 +71,35 @@ class CustomerImportCommand extends Command
             return;
         }
 
-        $count = 0;
-        do {
-            $transformedData = $this->transformRaw($reader->value());
+        $this->count = 1;
+
+        if($this->hasProcessAlreadyStartedForGivenFileName($fileName))
+        {
+            $numberOfCustomersAlreadyStored = Customer::where(["filename" => $fileName])->max("count");
+
+            while($numberOfCustomersAlreadyStored > 0)
+            {
+                $this->reader->next();
+                $this->count++;
+                $numberOfCustomersAlreadyStored--;
+            }
+        }
+
+        while(!$this->isProcessFinished()){
+            $transformedData = $this->prepareData($this->reader->value(), $this->count, $fileName);
             $customer = new Customer($transformedData);
             $customer->save();
-            $count++;
-        } while ($reader->next() && !is_null($reader->value()) && $count < 10);
+            $this->count++;
 
+            $this->reader->next();
+        }
 
-        $reader->close();
+        $this->reader->close();
     }
 
-    private function transformRaw(array $raw): array
+    private function prepareData(array $raw, int $counter, string $fileName): array
     {
-        return [
+        return array_merge([
             "name" => $raw["name"],
             "address" => $raw["address"],
             "checked" => (boolean)$raw["checked"],
@@ -87,7 +112,10 @@ class CustomerImportCommand extends Command
             "credit_card_number" => $raw["credit_card"]["number"],
             "credit_card_name" => $raw["credit_card"]["name"],
             "credit_card_expiration_date" => $raw["credit_card"]["expirationDate"],
-        ];
+        ], [
+            'count' => $counter,
+            'filename' => $fileName
+        ]);
     }
 
     /**
@@ -121,5 +149,22 @@ class CustomerImportCommand extends Command
     private function parseSlashedDate($dateOfBirth)
     {
         return Carbon::createFromFormat('d/m/Y', $dateOfBirth)->format("Y-m-d");
+    }
+
+    /**
+     * @param string $fileName
+     * @return bool
+     */
+    private function hasProcessAlreadyStartedForGivenFileName(string $fileName): bool
+    {
+        return Customer::where("filename", $fileName)->exists();
+    }
+
+    /**
+     * @return bool
+     */
+    private function isProcessFinished(): bool
+    {
+        return is_null($this->reader->value());
     }
 }

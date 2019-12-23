@@ -52,7 +52,11 @@ class CustomerImportCommandTest extends TestCase
         $this->artisan('customer:import', ['file' => $file]);
 
         // Assert
-        $this->assertDatabaseHas('customers', ['id' => 1]);
+        $this->assertDatabaseHas('customers', [
+            'id' => 1,
+            'count' => 1,
+            'filename' => $file,
+        ]);
         $this->assertDatabaseMissing('customers', ['id' => 2]);
     }
 
@@ -224,6 +228,23 @@ class CustomerImportCommandTest extends TestCase
             'credit_card_name' => "Brooks Hudson",
             'credit_card_expiration_date' => "12/19",
         ]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_does_not_write_same_entry_twice_when_run_twice()
+    {
+        // Arrange
+        $file = 'tests/Support/jsons/sample_with_one_entry.json';
+
+        // Act
+        $this->artisan('customer:import', ['file' => $file]);
+        $this->artisan('customer:import', ['file' => $file]);
+
+        // Assert
+        $this->assertDatabaseHas('customers', ['id' => 1]);
+        $this->assertDatabaseMissing('customers', ['id' => 2]);
     }
 
     /**
