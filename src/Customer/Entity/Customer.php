@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace JsonToDatabase\Customer\Entity;
 
 use Illuminate\Database\Eloquent\Model;
 

@@ -2,7 +2,7 @@
 
 namespace JsonToDatabase\Customer\Service;
 
-use App\Customer;
+use JsonToDatabase\Customer\Entity\Customer;
 use Carbon\Carbon;
 use JsonToDatabase\Customer\Exception\ImportException;
 use pcrov\JsonReader\InputStream\IOException;
