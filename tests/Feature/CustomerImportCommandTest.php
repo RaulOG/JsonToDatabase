@@ -252,13 +252,13 @@ class CustomerImportCommandTest extends TestCase
      */
     public function it_writes_multiple_entries_when_file_contains_multiple_rows()
     {
-//        $file = 'tests/Support/jsons/sample_with_multiple_entries.json';
-//
-//        $this->artisan('customer:import', ['file' => $file]);
-//
-//        $this->assertDatabaseHas('customers', ['id' => 1]);
-//        $this->assertDatabaseHas('customers', ['id' => 2]);
-//        $this->assertDatabaseHas('customers', ['id' => 3]);
+        $file = 'tests/Support/jsons/sample_with_multiple_entries.json';
+
+        $this->artisan('customer:import', ['file' => $file]);
+
+        $this->assertDatabaseHas('customers', ['id' => 1]);
+        $this->assertDatabaseHas('customers', ['id' => 2]);
+        $this->assertDatabaseHas('customers', ['id' => 3]);
     }
 
 }
