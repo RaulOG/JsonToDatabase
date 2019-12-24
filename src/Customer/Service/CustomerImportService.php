@@ -2,15 +2,22 @@
 
 namespace JsonToDatabase\Customer\Service;
 
-use JsonToDatabase\Customer\Entity\Customer;
 use Carbon\Carbon;
 use JsonToDatabase\Customer\Exception\ImportException;
+use JsonToDatabase\Customer\Repository\CustomerRepository;
 use pcrov\JsonReader\InputStream\IOException;
 use pcrov\JsonReader\JsonReader;
 use pcrov\JsonReader\Parser\ParseException;
 
 class CustomerImportService
 {
+    private $customerRepository;
+
+    public function __construct(CustomerRepository $customerRepository)
+    {
+        $this->customerRepository = $customerRepository;
+    }
+
     public function run(string $fileName):void
     {
         $filePath = base_path($fileName);
@@ -29,8 +36,8 @@ class CustomerImportService
 
         $count = 1;
 
-        if ($this->hasProcessAlreadyStartedForGivenFileName($fileName)) {
-            $numberOfCustomersAlreadyStored = Customer::where(["filename" => $fileName])->max("count");
+        if ($this->customerRepository->existsByFilename($fileName)) {
+            $numberOfCustomersAlreadyStored = $this->customerRepository->findLastCountByFilename($fileName);
 
             while ($numberOfCustomersAlreadyStored > 0) {
                 $reader->next();
@@ -41,8 +48,7 @@ class CustomerImportService
 
         while (!$this->isProcessFinished($reader)) {
             $transformedData = $this->prepareData($reader->value(), $count, $fileName);
-            $customer = new Customer($transformedData);
-            $customer->save();
+            $this->customerRepository->store($transformedData);
             $count++;
 
             $reader->next();
@@ -103,15 +109,6 @@ class CustomerImportService
     private function parseSlashedDate($dateOfBirth)
     {
         return Carbon::createFromFormat('d/m/Y', $dateOfBirth)->format("Y-m-d");
-    }
-
-    /**
-     * @param string $fileName
-     * @return bool
-     */
-    private function hasProcessAlreadyStartedForGivenFileName(string $fileName): bool
-    {
-        return Customer::where("filename", $fileName)->exists();
     }
 
     /**
