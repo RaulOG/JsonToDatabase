@@ -12,22 +12,22 @@ use pcrov\JsonReader\Parser\ParseException;
 class CustomerImportService
 {
     private $customerRepository;
+    private $reader;
 
-    public function __construct(CustomerRepository $customerRepository)
+    public function __construct(JsonReader $reader, CustomerRepository $customerRepository)
     {
         $this->customerRepository = $customerRepository;
+        $this->reader = $reader;
     }
 
     public function run(string $fileName):void
     {
         $filePath = base_path($fileName);
 
-        $reader = new JsonReader();
-
         try {
-            $reader->open($filePath);
-            $reader->read(); // Enter in array of customers
-            $reader->read(); // Reader index at the customer 0
+            $this->reader->open($filePath);
+            $this->reader->read(); // Enter in array of customers
+            $this->reader->read(); // Reader index at the customer 0
         } catch (IOException $e) {
             throw new ImportException("File not found");
         } catch (ParseException $e) {
@@ -40,21 +40,21 @@ class CustomerImportService
             $numberOfCustomersAlreadyStored = $this->customerRepository->findLastCountByFilename($fileName);
 
             while ($numberOfCustomersAlreadyStored > 0) {
-                $reader->next();
+                $this->reader->next();
                 $count++;
                 $numberOfCustomersAlreadyStored--;
             }
         }
 
-        while (!$this->isProcessFinished($reader)) {
-            $transformedData = $this->prepareData($reader->value(), $count, $fileName);
+        while (!$this->isProcessFinished()) {
+            $transformedData = $this->prepareData($this->reader->value(), $count, $fileName);
             $this->customerRepository->store($transformedData);
             $count++;
 
-            $reader->next();
+            $this->reader->next();
         }
 
-        $reader->close();
+        $this->reader->close();
     }
 
     private function prepareData(array $raw, int $counter, string $fileName): array
@@ -112,11 +112,10 @@ class CustomerImportService
     }
 
     /**
-     * @param JsonReader $reader
      * @return bool
      */
-    private function isProcessFinished(JsonReader $reader): bool
+    private function isProcessFinished(): bool
     {
-        return is_null($reader->value());
+        return is_null($this->reader->value());
     }
 }
