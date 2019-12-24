@@ -175,6 +175,10 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 
+        /*
+         * JsonToDatabase specific Service Providers...
+         */
+        \JsonToDatabase\Reader\ReaderServiceProvider::class,
     ],
 
     /*

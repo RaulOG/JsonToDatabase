@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use JsonToDatabase\Customer\Exception\ImportException;
 use JsonToDatabase\Customer\Service\CustomerImportService;
+use JsonToDatabase\Reader\Exception\ReaderException;
 
 class CustomerImportCommand extends Command
 {
@@ -22,7 +22,7 @@ class CustomerImportCommand extends Command
     {
         try {
             $service->run($this->argument("file"));
-        } catch (ImportException $e) {
+        } catch (ReaderException $e) {
             $this->error($e->getMessage());
         }
     }

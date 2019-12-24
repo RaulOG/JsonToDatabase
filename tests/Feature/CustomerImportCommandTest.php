@@ -233,7 +233,7 @@ class CustomerImportCommandTest extends TestCase
     /**
      * @test
      */
-    public function it_does_not_write_same_entry_twice_when_run_twice()
+    public function it_does_not_write_any_entry_from_an_already_imported_file()
     {
         // Arrange
         $file = 'tests/Support/jsons/sample_with_one_entry.json';

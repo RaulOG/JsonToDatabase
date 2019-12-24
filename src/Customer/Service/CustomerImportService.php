@@ -3,58 +3,43 @@
 namespace JsonToDatabase\Customer\Service;
 
 use Carbon\Carbon;
-use JsonToDatabase\Customer\Exception\ImportException;
 use JsonToDatabase\Customer\Repository\CustomerRepository;
-use pcrov\JsonReader\InputStream\IOException;
-use pcrov\JsonReader\JsonReader;
-use pcrov\JsonReader\Parser\ParseException;
+use JsonToDatabase\Reader\Factory\ReaderFactory;
 
 class CustomerImportService
 {
     private $customerRepository;
-    private $reader;
 
-    public function __construct(JsonReader $reader, CustomerRepository $customerRepository)
+    private $readerFactory;
+
+    public function __construct(ReaderFactory $readerFactory, CustomerRepository $customerRepository)
     {
         $this->customerRepository = $customerRepository;
-        $this->reader = $reader;
+        $this->readerFactory = $readerFactory;
     }
 
     public function run(string $fileName):void
     {
-        $filePath = base_path($fileName);
-
-        try {
-            $this->reader->open($filePath);
-            $this->reader->read(); // Enter in array of customers
-            $this->reader->read(); // Reader index at the customer 0
-        } catch (IOException $e) {
-            throw new ImportException("File not found");
-        } catch (ParseException $e) {
-            throw new ImportException("File is empty");
-        }
+        $reader = $this->readerFactory->makeFor($fileName);
 
         $count = 1;
 
         if ($this->customerRepository->existsByFilename($fileName)) {
             $numberOfCustomersAlreadyStored = $this->customerRepository->findLastCountByFilename($fileName);
 
-            while ($numberOfCustomersAlreadyStored > 0) {
-                $this->reader->next();
-                $count++;
-                $numberOfCustomersAlreadyStored--;
-            }
+            $reader->startAt($numberOfCustomersAlreadyStored);
         }
 
-        while (!$this->isProcessFinished()) {
-            $transformedData = $this->prepareData($this->reader->value(), $count, $fileName);
+        $value = $reader->read();
+
+        while ($value) {
+            $transformedData = $this->prepareData($value, $count, $fileName);
             $this->customerRepository->store($transformedData);
             $count++;
 
-            $this->reader->next();
+            $value = $reader->read();
         }
 
-        $this->reader->close();
     }
 
     private function prepareData(array $raw, int $counter, string $fileName): array
@@ -109,13 +94,5 @@ class CustomerImportService
     private function parseSlashedDate($dateOfBirth)
     {
         return Carbon::createFromFormat('d/m/Y', $dateOfBirth)->format("Y-m-d");
-    }
-
-    /**
-     * @return bool
-     */
-    private function isProcessFinished(): bool
-    {
-        return is_null($this->reader->value());
     }
 }
