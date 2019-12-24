@@ -22,20 +22,20 @@ class CustomerImportService
     {
         $reader = $this->readerFactory->makeFor($fileName);
 
-        $count = 1;
+        $count = 0;
 
-        if ($this->customerRepository->existsByFilename($fileName)) {
-            $numberOfCustomersAlreadyStored = $this->customerRepository->findLastCountByFilename($fileName);
-
-            $reader->startAt($numberOfCustomersAlreadyStored);
+        if ($this->customerRepository->existsByFilename($fileName))
+        {
+            $count = $this->customerRepository->findLastCountByFilename($fileName);
+            $reader->startAt($count);
         }
 
         $value = $reader->read();
 
         while ($value) {
+            ++$count;
             $transformedData = $this->prepareData($value, $count, $fileName);
             $this->customerRepository->store($transformedData);
-            $count++;
 
             $value = $reader->read();
         }
