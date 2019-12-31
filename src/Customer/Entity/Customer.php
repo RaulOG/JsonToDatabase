@@ -8,7 +8,8 @@ class Customer extends Model
 {
     protected $fillable = [
         "id",
-        "count",
+        "hash",
+        "index_in_file",
         "filename",
         "name",
         "address",

@@ -15,8 +15,9 @@ class CreateCustomersTable extends Migration
     {
         Schema::create('customers', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('count');
+            $table->string('hash', 128)->unique();
             $table->string('filename');
+            $table->unsignedBigInteger('index_in_file');
             $table->string('name');
             $table->string('address');
             $table->boolean('checked');

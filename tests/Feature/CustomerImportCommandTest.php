@@ -9,9 +9,7 @@ class CustomerImportCommandTest extends TestCase
 {
     use DatabaseMigrations;
 
-    /**
-     * @test
-     */
+    /** @test */
     public function it_outputs_error_message_when_file_is_not_found()
     {
         // Arrange
@@ -24,9 +22,7 @@ class CustomerImportCommandTest extends TestCase
         $command->expectsOutput('File not found');
     }
 
-    /**
-     * @test
-     */
+    /** @test */
     public function it_does_nothing_when_file_is_empty()
     {
         // Arrange
@@ -40,9 +36,7 @@ class CustomerImportCommandTest extends TestCase
         $command->expectsOutput('File is empty');
     }
 
-    /**
-     * @test
-     */
+    /** @test */
     public function it_writes_one_entry_when_file_contains_one_row()
     {
         // Arrange
@@ -54,15 +48,13 @@ class CustomerImportCommandTest extends TestCase
         // Assert
         $this->assertDatabaseHas('customers', [
             'id' => 1,
-            'count' => 1,
+            'index_in_file' => 1,
             'filename' => $file,
         ]);
         $this->assertDatabaseMissing('customers', ['id' => 2]);
     }
 
-    /**
-     * @test
-     */
+    /** @test */
     public function it_writes_a_customer_entry_with_expected_data_structure()
     {
         // Arrange
@@ -123,7 +115,7 @@ class CustomerImportCommandTest extends TestCase
     }
 
     /** @test */
-    public function it_stores_date_of_birth_from_a_slash_formatted_birth_of_date()
+    public function it_stores_date_of_birth_when_it_is_a_slash_formatted_birth_of_date()
     {
         // Arrange
         $file = 'tests/Support/jsons/sample_with_slash_date_of_birth_as_d-m-y.json';
@@ -230,9 +222,7 @@ class CustomerImportCommandTest extends TestCase
         ]);
     }
 
-    /**
-     * @test
-     */
+    /** @test */
     public function it_does_not_write_any_entry_from_an_already_imported_file()
     {
         // Arrange
@@ -247,18 +237,36 @@ class CustomerImportCommandTest extends TestCase
         $this->assertDatabaseMissing('customers', ['id' => 2]);
     }
 
-    /**
-     * @test
-     */
+    /** @test */
     public function it_writes_multiple_entries_when_file_contains_multiple_rows()
     {
+        // Arrange
         $file = 'tests/Support/jsons/sample_with_multiple_entries.json';
 
+        // Act
         $this->artisan('customer:import', ['file' => $file]);
 
+        // Assert
         $this->assertDatabaseHas('customers', ['id' => 1]);
         $this->assertDatabaseHas('customers', ['id' => 2]);
         $this->assertDatabaseHas('customers', ['id' => 3]);
     }
 
+    /**
+     * @test
+     *
+     * Two entries are considered duplicated when all information contained within are matching
+     */
+    public function it_does_not_write_duplicate_entries()
+    {
+        // Arrange
+        $file = 'tests/Support/jsons/sample_with_a_duplicated_entry.json';
+
+        // Act
+        $this->artisan('customer:import', ['file' => $file]);
+
+        // Assert
+        $this->assertDatabaseHas('customers', ['id' => 1]);
+        $this->assertDatabaseMissing('customers', ['id' => 2]);
+    }
 }
