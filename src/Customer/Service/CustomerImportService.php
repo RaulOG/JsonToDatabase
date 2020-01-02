@@ -36,7 +36,13 @@ class CustomerImportService
         while ($value)
         {
             $index++;
-            $transformedData = $this->prepareData($value, $index, $fileName);
+            $transformedData = $this->transformData($value, $index, $fileName);
+
+            if(false == $this->passesAgeConstraint($transformedData))
+            {
+                $value = $reader->read();
+                continue;
+            }
 
             try
             {
@@ -51,7 +57,7 @@ class CustomerImportService
 
     }
 
-    private function prepareData(array $raw, int $index, string $fileName): array
+    private function transformData(array $raw, int $index, string $fileName): array
     {
         $hash = $this->makeHash($raw);
         return array_merge([
@@ -98,7 +104,7 @@ class CustomerImportService
             return $this->parseSlashedDate($dateOfBirth);
         }
 
-        return Carbon::create($dateOfBirth)->format("Y-m-d");
+        return Carbon::create($dateOfBirth);
     }
 
     /**
@@ -118,7 +124,7 @@ class CustomerImportService
      */
     private function parseSlashedDate($dateOfBirth)
     {
-        return Carbon::createFromFormat('d/m/Y', $dateOfBirth)->format("Y-m-d");
+        return Carbon::createFromFormat('d/m/Y', $dateOfBirth);
     }
 
     /**
@@ -130,5 +136,22 @@ class CustomerImportService
     private function isNotFirstTimeRunningFor(string $fileName): bool
     {
         return $this->customerRepository->existsByFilename($fileName);
+    }
+
+    private function passesAgeConstraint($transformedData)
+    {
+        if(is_null($transformedData["date_of_birth"]))
+        {
+            return true;
+        }
+
+        $age = $transformedData["date_of_birth"]->diff(Carbon::now())->format("%y");
+
+        if(18 <= $age && $age <= 65)
+        {
+            return true;
+        }
+
+        return false;
     }
 }

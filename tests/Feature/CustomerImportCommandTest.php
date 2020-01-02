@@ -269,4 +269,30 @@ class CustomerImportCommandTest extends TestCase
         $this->assertDatabaseHas('customers', ['id' => 1]);
         $this->assertDatabaseMissing('customers', ['id' => 2]);
     }
+
+    /** @test */
+    public function it_does_not_process_entries_whose_age_is_lower_than_18()
+    {
+        // Arrange
+        $file = 'tests/Support/jsons/sample_with_a_17_year_old_entry.json';
+
+        // Act
+        $this->artisan('customer:import', ['file' => $file]);
+
+        // Assert
+        $this->assertDatabaseMissing('customers', ['id' => 1]);
+    }
+
+    /** @test */
+    public function it_does_not_process_entries_whose_age_is_higher_than_65()
+    {
+        // Arrange
+        $file = 'tests/Support/jsons/sample_with_a_70_year_old_entry.json';
+
+        // Act
+        $this->artisan('customer:import', ['file' => $file]);
+
+        // Assert
+        $this->assertDatabaseMissing('customers', ['id' => 1]);
+    }
 }
