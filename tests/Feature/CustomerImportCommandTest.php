@@ -66,16 +66,16 @@ class CustomerImportCommandTest extends TestCase
         // Assert
         $this->assertDatabaseHas('customers', [
             'id' => 1,
-            'name' =>  "Prof. Simeon Green",
-            'address' =>  "328 Bergstrom Heights Suite 709 49592 Lake Allenville",
-            'checked' =>  (int)false,
-            'description' =>  "Voluptatibus nihil dolor quaerat.",
-            'interest' =>  "enable 24/7 channels",
-            'date_of_birth' =>  "1989-03-21",
-            'email' =>  "nerdman@cormier.net",
-            'account' =>  "556436171909",
+            'name' => "Prof. Simeon Green",
+            'address' => "328 Bergstrom Heights Suite 709 49592 Lake Allenville",
+            'checked' => (int)false,
+            'description' => "Voluptatibus nihil dolor quaerat.",
+            'interest' => "enable 24/7 channels",
+            'date_of_birth' => "1989-03-21",
+            'email' => "nerdman@cormier.net",
+            'account' => "556436171909",
             'credit_card_type' => 'Visa',
-            'credit_card_number' =>"4532383564703",
+            'credit_card_number' => "4532383564777",
             'credit_card_name' => "Brooks Hudson",
             'credit_card_expiration_date' => "12/19",
         ]);
@@ -108,7 +108,7 @@ class CustomerImportCommandTest extends TestCase
             'email' => "nerdman@cormier.net",
             'account' => "556436171909",
             'credit_card_type' => 'Visa',
-            'credit_card_number' => "4532383564703",
+            'credit_card_number' => "4555383564703",
             'credit_card_name' => "Brooks Hudson",
             'credit_card_expiration_date' => "12/19",
         ]);
@@ -135,7 +135,7 @@ class CustomerImportCommandTest extends TestCase
             'email' => "nerdman@cormier.net",
             'account' => "556436171909",
             'credit_card_type' => 'Visa',
-            'credit_card_number' => "4532383564703",
+            'credit_card_number' => "4555383564703",
             'credit_card_name' => "Brooks Hudson",
             'credit_card_expiration_date' => "12/19",
         ]);
@@ -162,7 +162,7 @@ class CustomerImportCommandTest extends TestCase
             'email' => "nerdman@cormier.net",
             'account' => "556436171909",
             'credit_card_type' => 'Visa',
-            'credit_card_number' => "4532383564703",
+            'credit_card_number' => "4555383564703",
             'credit_card_name' => "Brooks Hudson",
             'credit_card_expiration_date' => "12/19",
         ]);
@@ -189,7 +189,7 @@ class CustomerImportCommandTest extends TestCase
             'email' => "nerdman@cormier.net",
             'account' => "556436171909",
             'credit_card_type' => 'Visa',
-            'credit_card_number' => "4532383564703",
+            'credit_card_number' => "4532383564777",
             'credit_card_name' => "Brooks Hudson",
             'credit_card_expiration_date' => "12/19",
         ]);
@@ -216,7 +216,7 @@ class CustomerImportCommandTest extends TestCase
             'email' => "nerdman@cormier.net",
             'account' => "556436171909",
             'credit_card_type' => 'Visa',
-            'credit_card_number' => "4532383564703",
+            'credit_card_number' => "4532383564777",
             'credit_card_name' => "Brooks Hudson",
             'credit_card_expiration_date' => "12/19",
         ]);
@@ -295,4 +295,19 @@ class CustomerImportCommandTest extends TestCase
         // Assert
         $this->assertDatabaseMissing('customers', ['id' => 1]);
     }
+
+    /** @test */
+    public function it_only_processes_entries_whose_credit_card_number_contains_three_consecutive_same_digits()
+    {
+        // Arrange
+        $file = 'tests/Support/jsons/sample_with_a_valid_and_an_invalid_credit_card_number.json';
+
+        // Act
+        $this->artisan('customer:import', ['file' => $file]);
+
+        // Assert
+        $this->assertDatabaseHas('customers', ['id' => 1]);
+        $this->assertDatabaseMissing('customers', ['id' => 2]);
+    }
+
 }

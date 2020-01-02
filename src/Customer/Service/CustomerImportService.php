@@ -25,7 +25,7 @@ class CustomerImportService
 
         $index = 0;
 
-        if($this->isNotFirstTimeRunningFor($fileName))
+        if ($this->isNotFirstTimeRunningFor($fileName))
         {
             $index = $this->customerRepository->getLastStoredIndexByFileName($fileName);
             $reader->startAt($index);
@@ -38,7 +38,14 @@ class CustomerImportService
             $index++;
             $transformedData = $this->transformData($value, $index, $fileName);
 
-            if(false == $this->passesAgeConstraint($transformedData))
+            if (false == $this->passesAgeConstraint($transformedData))
+            {
+                $value = $reader->read();
+                continue;
+            }
+
+
+            if (false == $this->passesCreditCardNumberConstraint($transformedData))
             {
                 $value = $reader->read();
                 continue;
@@ -47,14 +54,23 @@ class CustomerImportService
             try
             {
                 $this->customerRepository->store($transformedData);
-            }
-            catch(CustomerDuplicatedException $e)
+            } catch (CustomerDuplicatedException $e)
             {
             }
 
             $value = $reader->read();
         }
+    }
 
+    /**
+     * We consider the service is not running for the first time on a file when there are already customers stored who match the filename
+     *
+     * @param string $fileName
+     * @return bool
+     */
+    private function isNotFirstTimeRunningFor(string $fileName): bool
+    {
+        return $this->customerRepository->existsByFilename($fileName);
     }
 
     private function transformData(array $raw, int $index, string $fileName): array
@@ -84,9 +100,10 @@ class CustomerImportService
      * @param array $value
      * @return string
      */
-    private function makeHash(array $value) {
+    private function makeHash(array $value)
+    {
         return hash("sha512",
-            $value['name'].$value['address'].$value['checked'].$value['description'].$value['interest'].$value['date_of_birth'].$value['email'].$value['account'].$value['credit_card']['type'].$value['credit_card']['number'].$value['credit_card']['name'].$value['credit_card']['expirationDate']
+            $value['name'] . $value['address'] . $value['checked'] . $value['description'] . $value['interest'] . $value['date_of_birth'] . $value['email'] . $value['account'] . $value['credit_card']['type'] . $value['credit_card']['number'] . $value['credit_card']['name'] . $value['credit_card']['expirationDate']
         );
     }
 
@@ -96,11 +113,13 @@ class CustomerImportService
      */
     private function getDateOfBirth($dateOfBirth)
     {
-        if (is_null($dateOfBirth)) {
+        if (is_null($dateOfBirth))
+        {
             return null;
         }
 
-        if ($this->dateHasSlashes($dateOfBirth)) {
+        if ($this->dateHasSlashes($dateOfBirth))
+        {
             return $this->parseSlashedDate($dateOfBirth);
         }
 
@@ -127,29 +146,62 @@ class CustomerImportService
         return Carbon::createFromFormat('d/m/Y', $dateOfBirth);
     }
 
-    /**
-     * We consider the service is not running for the first time on a file when there are already customers stored who match the filename
-     *
-     * @param string $fileName
-     * @return bool
-     */
-    private function isNotFirstTimeRunningFor(string $fileName): bool
-    {
-        return $this->customerRepository->existsByFilename($fileName);
-    }
-
     private function passesAgeConstraint($transformedData)
     {
-        if(is_null($transformedData["date_of_birth"]))
+        if (is_null($transformedData["date_of_birth"]))
         {
             return true;
         }
 
         $age = $transformedData["date_of_birth"]->diff(Carbon::now())->format("%y");
 
-        if(18 <= $age && $age <= 65)
+        if (18 <= $age && $age <= 65)
         {
             return true;
+        }
+
+        return false;
+    }
+
+    private function passesCreditCardNumberConstraint($transformedData)
+    {
+        if ($this->doesCreditCardNumberContainThreeConsecutiveSameDigits($transformedData))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function doesCreditCardNumberContainThreeConsecutiveSameDigits($transformedData)
+    {
+        $creditCardDigits = str_split($transformedData["credit_card_number"]);
+
+        $lastDigit = null;
+        $sameDigitCount = 0;
+
+        foreach ($creditCardDigits as $digit)
+        {
+            if (is_null($lastDigit))
+            {
+                $lastDigit = $digit;
+                $sameDigitCount++;
+            } else
+            {
+                if ($lastDigit === $digit)
+                {
+                    if ($sameDigitCount == 2)
+                    {
+                        return true;
+                    }
+
+                    $sameDigitCount++;
+                } else
+                {
+                    $sameDigitCount = 1;
+                    $lastDigit = $digit;
+                }
+            }
         }
 
         return false;

@@ -29,11 +29,8 @@
         <server name="MAIL_DRIVER" value="array"/>
         <server name="QUEUE_CONNECTION" value="sync"/>
         <server name="SESSION_DRIVER" value="array"/>
-        <!-- Sqlite-->
-        <server name="DB_DATABASE" value=":memory:"/>
-        <server name="DB_CONNECTION" value="sqlite"/>
 
         <!-- Mysql-->
-        <!--<server name="DB_DATABASE" value="test_json_to_database"/>-->
+        <server name="DB_DATABASE" value="test_json_to_database"/>
     </php>
 </phpunit>
