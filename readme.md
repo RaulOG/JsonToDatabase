@@ -1,72 +1,80 @@
-<p align="center"><img src="https://res.cloudinary.com/dtfbvvkyp/image/upload/v1566331377/laravel-logolockup-cmyk-red.svg" width="400"></p>
+# JsonToDatabase
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/d/total.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/license.svg" alt="License"></a>
-</p>
+JsonToDatabase is an application which reads json files and stores their contents into database.
 
-## About Laravel
+## The exercise
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Primary goal
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Data within json must be stored ([Data notes](#data-notes))
+- Process can be restored where it was last in case it is interrupted ([Restoring the process](#restoring-the-process))
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Secondary goals
+- Design application for growth: a customer who will demand new features ([Growth considerations](#growth-considerations))
+- Solid, not exaggerated database model
+- Only process records with age between 18 and 65 (or unknown)
 
-## Learning Laravel
+### Bonus goals
+- Consider a file x500 as large as the one provided, for a total of 5 million records ([Scaling the process](#scaling-the-process))
+- The process is easy to deploy for a different data format such as XML or CSV ([Supporting a new file extension](#supporting-a-new-file-extension))
+- Only process records whose credit card number contains 3 consecutive same digits
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Additional
+- Process does not store duplicated entries ([Skipping duplicates](#skipping-duplicates))
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## The solution
 
-## Laravel Sponsors
+### Restoring the process
+The CustomerImportService detects when a process on a file has already started by finding customers in the database that match the given file name.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+If so happens, the process will be restored by instructing the JsonReader to read from the last stored index.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[British Software Development](https://www.britishsoftware.co)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- [UserInsights](https://userinsights.com)
-- [Fragrantica](https://www.fragrantica.com)
-- [SOFTonSOFA](https://softonsofa.com/)
-- [User10](https://user10.com)
-- [Soumettre.fr](https://soumettre.fr/)
-- [CodeBrisk](https://codebrisk.com)
-- [1Forge](https://1forge.com)
-- [TECPRESSO](https://tecpresso.co.jp/)
-- [Runtime Converter](http://runtimeconverter.com/)
-- [WebL'Agence](https://weblagence.com/)
-- [Invoice Ninja](https://www.invoiceninja.com)
-- [iMi digital](https://www.imi-digital.de/)
-- [Earthlink](https://www.earthlink.ro/)
-- [Steadfast Collective](https://steadfastcollective.com/)
-- [We Are The Robots Inc.](https://watr.mx/)
-- [Understand.io](https://www.understand.io/)
-- [Abdel Elrafa](https://abdelelrafa.com)
-- [Hyper Host](https://hyper.host)
+### Growth considerations
 
-## Contributing
+Given that we do not know much information about the nature of the project or the customer's needs, the growth considerations applied are mostly based on intuition.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- The data importing tool might want to be used from a web interface. The system is ready for such use since we delegate the responsibility to run the import to the CustomerImportService and not the CustomerImportCommand.
+- Employing our ReaderFactory and the ReaderInterface allows us to easily create new readers for new file extensions.
+- A battery of well written acceptance tests has been created to guarantee that any product increments will not break already existing functionality, easing the capacity to evolve the product.
 
-## Security Vulnerabilities
+### Scaling the process
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Should the files to be read become large enough, the process would take large amounts of time.
 
-## License
+A possible solution to scaling the process is to let the CustomerImportService delegate the responsibility to evaluate and store each entry individually using jobs and queue workers. For example, every batch of 100 read entries, the CustomerImportService could create a job. In such case, more work would be required to adjust the ability of the CustomerImportProcess to restore the process when it is interrupted.
 
-The Laravel framework is open-source software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Supporting a new file extension
+
+To support a new file extension, you must take two steps:
+- Create a new reader class which implements the ReaderInterface.
+- Instruct the ReaderFactory to retrieve your new reader when the given file extension is detected.
+
+A JsonAdapter has been created to wrap the JsonReader composer dependency. Implementing a new reader might involve creating a new adapter.
+
+You may have a look at the already created CsvAdapter and XMLAdapter classes, which only require that you implement their ReaderInterface methods to work.
+
+### Skipping duplicates
+
+A hash column has been created into customers table and made unique. The hash is created using SHA512 and based on all customer information concatenated.
+
+Whenever a duplicated customer is processed, there will be a CustomerDuplicatedException and that entry will be skipped.
+
+There is a very small chance of collision. That chance has been considered negligible.
+
+## Data notes
+
+The json file is expected to contain the following customer information:
+
+- name (E.g.: Prof. Simeon Green)
+- address (E.g..: 328 Bergstrom Heights Suite 709 49592 Lake Allenville)
+- checked (E.g.: False)
+- description (E.g.: Beatae adipisci quae dolores possimus similique impedit laudantium)
+- interest (E.g.: unleash back-end content)
+- date_of_birth (E.g.: 1989-03-21T01:11:13+00:00, 15\/09\/1978, 1966-07-15 00:00:00)
+- email (E.g.: dimitri81@watsica.net)
+- account (E.g.: 7160713229)
+- credit_card
+    - type (E.g.: Visa, Discover Card)
+    - number (E.g.: 4929658516333333)
+    - name (E.g.: Sarah Purdy Sr.)
+    - expirationDate (E.g.: 01\/19)
