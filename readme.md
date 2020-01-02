@@ -41,7 +41,7 @@ Given that we do not know much information about the nature of the project or th
 
 Should the files to be read become large enough, the process would take large amounts of time.
 
-A possible solution to scaling the process is to let the CustomerImportService delegate the responsibility to evaluate and store each entry individually using jobs and queue workers. For example, every batch of 100 read entries, the CustomerImportService could create a job. In such case, more work would be required to adjust the ability of the CustomerImportProcess to restore the process when it is interrupted.
+A possible solution to scaling the process is to let the CustomerImportService delegate the responsibility to evaluate and store each entry individually using jobs and queue workers. For example, every batch of 100 read entries, the CustomerImportService could create a job. In such case, more work would be required to adjust the ability of the CustomerImportService to restore the process when it is interrupted.
 
 ### Supporting a new file extension
 
