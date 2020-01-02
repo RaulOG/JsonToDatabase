@@ -35,7 +35,7 @@ Given that we do not know much information about the nature of the project or th
 
 - The data importing tool might want to be used from a web interface. The system is ready for such use since we delegate the responsibility to run the import to the CustomerImportService and not the CustomerImportCommand.
 - Employing our ReaderFactory and the ReaderInterface allows us to easily create new readers for new file extensions.
-- A battery of well written acceptance tests has been created to guarantee that any product increments will not break already existing functionality, easing the capacity to evolve the product.
+- A battery of well written acceptance tests have been created to guarantee that any product increments will not break already existing functionality, easing the capacity to evolve the product.
 
 ### Scaling the process
 
@@ -49,7 +49,7 @@ To support a new file extension, you must take two steps:
 - Create a new reader class which implements the ReaderInterface.
 - Instruct the ReaderFactory to retrieve your new reader when the given file extension is detected.
 
-A JsonAdapter has been created to wrap the JsonReader composer dependency. Implementing a new reader might involve creating a new adapter.
+A JsonAdapter has been created for the JsonReader composer dependency in order to have our ReaderInterface implemented. Implementing a new reader might involve creating a new adapter.
 
 You may have a look at the already created CsvAdapter and XMLAdapter classes, which only require that you implement their ReaderInterface methods to work.
 
@@ -59,7 +59,7 @@ A hash column has been created into customers table and made unique. The hash is
 
 Whenever a duplicated customer is processed, there will be a CustomerDuplicatedException and that entry will be skipped.
 
-There is a very small chance of collision. That chance has been considered negligible.
+There is a very small chance of hash collision between two different entries. That chance has been considered negligible.
 
 ## Data notes
 
